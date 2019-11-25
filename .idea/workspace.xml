@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="4a05ea2a-9810-4a57-ab9a-d4c92f3b2123" name="Default Changelist" comment="" />
+    <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Go File" />
+      </list>
+    </option>
+  </component>
+  <component name="GOROOT" path="/usr/local/go" />
+  <component name="GoLibraries">
+    <option name="indexEntireGoPath" value="false" />
+  </component>
+  <component name="ProjectId" id="1TrsM1OK3dlz6i9H7FHDhvLUmZq" />
+  <component name="PropertiesComponent">
+    <property name="DefaultGoTemplateProperty" value="Go File" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="go.import.settings.migrated" value="true" />
+    <property name="go.sdk.automatically.set" value="true" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../prometheus_exporter" />
+    <property name="settings.editor.selected.configurable" value="go.vgo" />
+  </component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/logs" />
+    </key>
+  </component>
+  <component name="RunDashboard">
+    <option name="ruleStates">
+      <list>
+        <RuleState>
+          <option name="name" value="ConfigurationTypeDashboardGroupingRule" />
+        </RuleState>
+        <RuleState>
+          <option name="name" value="StatusDashboardGroupingRule" />
+        </RuleState>
+      </list>
+    </option>
+  </component>
+  <component name="RunManager" selected="Go Build.go build github.com/xiaobaiskill/workpool">
+    <configuration name="go build github.com/xiaobaiskill/workpool" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
+      <module name="proxy_center" />
+      <working_directory value="$PROJECT_DIR$" />
+      <kind value="PACKAGE" />
+      <filePath value="$PROJECT_DIR$/main.go" />
+      <package value="github.com/xiaobaiskill/workpool" />
+      <directory value="$PROJECT_DIR$/" />
+      <method v="2" />
+    </configuration>
+    <configuration name="TestConn_Set in github.com/xiaobaiskill/workpool/pkg/redis" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="proxy_center" />
+      <working_directory value="$PROJECT_DIR$/pkg/redis" />
+      <framework value="gotest" />
+      <kind value="PACKAGE" />
+      <package value="github.com/xiaobaiskill/workpool/pkg/redis" />
+      <directory value="$PROJECT_DIR$/" />
+      <filePath value="$PROJECT_DIR$/" />
+      <pattern value="^TestConn_Set$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="TestFileLog in github.com/xiaobaiskill/workpool/pkg/log" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="proxy_center" />
+      <working_directory value="$PROJECT_DIR$/pkg/log" />
+      <framework value="gotest" />
+      <kind value="PACKAGE" />
+      <package value="github.com/xiaobaiskill/workpool/pkg/log" />
+      <directory value="$PROJECT_DIR$/" />
+      <filePath value="$PROJECT_DIR$/" />
+      <pattern value="^TestFileLog$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="TestInitLog in github.com/xiaobaiskill/workpool/pkg/log" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="proxy_center" />
+      <working_directory value="$PROJECT_DIR$/pkg/log" />
+      <framework value="gotest" />
+      <kind value="PACKAGE" />
+      <package value="github.com/xiaobaiskill/workpool/pkg/log" />
+      <directory value="$PROJECT_DIR$/" />
+      <filePath value="$PROJECT_DIR$/" />
+      <pattern value="^TestInitLog$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="TestNew in github.com/xiaobaiskill/workpool/pkg/redis" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="proxy_center" />
+      <working_directory value="$PROJECT_DIR$/pkg/redis" />
+      <framework value="gotest" />
+      <kind value="PACKAGE" />
+      <package value="github.com/xiaobaiskill/workpool/pkg/redis" />
+      <directory value="$PROJECT_DIR$/" />
+      <filePath value="$PROJECT_DIR$/" />
+      <pattern value="^TestNew$" />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Go Build.go build github.com/xiaobaiskill/workpool" />
+        <item itemvalue="Go Test.TestInitLog in github.com/xiaobaiskill/workpool/pkg/log" />
+        <item itemvalue="Go Test.TestFileLog in github.com/xiaobaiskill/workpool/pkg/log" />
+        <item itemvalue="Go Test.TestConn_Set in github.com/xiaobaiskill/workpool/pkg/redis" />
+        <item itemvalue="Go Test.TestNew in github.com/xiaobaiskill/workpool/pkg/redis" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="1" />
+  </component>
+  <component name="VgoProject">
+    <integration-enabled>true</integration-enabled>
+  </component>
+</project>

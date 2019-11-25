@@ -15,16 +15,15 @@ var (
 )
 
 func StartDispathcher(nworks int) {
-	worker.WorkerPool = make(worker.WorkerPoolType, nworks)
-
-
-	for i:=1;i<nworks;i++{
-		worker.NewWorker(i, worker.WorkerPool).Start()
-	}
-
 	// 初始化 并 获取代理ip
 	queue.InitQueue()
 	HttpClientMapAdd(conf.Conf.Pool.ProxyIpSize)
+
+	// 开启工作
+	worker.WorkerPool = make(worker.WorkerPoolType, nworks)
+	for i:=1;i<nworks;i++{
+		worker.NewWorker(i, worker.WorkerPool).Start()
+	}
 
 	// 用于获取ip, 获取方式：1 定时30秒获取一次 ， 2 当工作量 > 代理ip量时 获取一次
 	go func() {
@@ -75,6 +74,7 @@ func HttpClientMapAdd(num int) {
 	ips, err := models.Conn.GetNumIPWithType(num)
 	if err != nil || len(ips) == 0 {
 		log.Logger.Error("没有获取到可用的ip")
+		panic("没有获取可用的IP ，程序终止")
 	}
 
 	for _, ip := range ips {

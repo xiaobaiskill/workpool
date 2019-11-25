@@ -1,16 +1,15 @@
 workpool
 ====
 
-### 关于如何使用
+### 快速启动
+`docker-compose up -d`
+
+### api
+ ```
+ 1、 /v1/catproxyip     查看当前 代理ip的 个数
+ 2、 /v1/index          代理请求
+ 3、 /metrics           prometheus 监控   
 ```
-请结合 proxypool 一起使用，
-
-// 设置gin 的全局变量
-export GIN_MODU=release
-
-// 编译执行该程序（该程序依赖 redis 服务。请先启动proxypool 中的redis服务）
-```
-
 
 ### 访问方式
 ```

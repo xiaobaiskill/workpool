@@ -1,0 +1,33 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  labels:
+    app: proxypool
+    component: bwit
+  name: proxypool
+  namespace: kube-ops
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: proxypool
+      component: bwit
+  template:
+    metadata:
+      labels:
+        app: proxypool
+        component: bwit
+    spec:
+      containers:
+        - name: proxypool
+          image: tangtaoit/proxypool:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /v2/health
+              port: 3000
+            initialDelaySeconds: 30
+            timeoutSeconds: 30

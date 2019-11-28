@@ -1,6 +1,13 @@
 workpool
 ====
 
+### 关于proxypool
+```
+请将proxypool 的程序放入 proxypool 的目录下
+
+目前使用的是汤涛的 proxypool 程序 
+``` 
+
 ### 快速启动
 `docker-compose up -d`
 

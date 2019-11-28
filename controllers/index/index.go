@@ -10,7 +10,6 @@ import (
 )
 
 func Index(c *gin.Context){
-	if c.Request.Method == "POST" {
 		param, err := ioutil.ReadAll(c.Request.Body)
 		if len(param) == 0 || err != nil {
 			c.String(http.StatusBadRequest,"请携带参数。")
@@ -24,12 +23,21 @@ func Index(c *gin.Context){
 		}
 
 		w.Data.Proxy,_ = strconv.ParseBool(c.Query("proxy"))
-		w.Data.Result = make(chan interface{})
+		w.Data.Result = make(chan request.ResultResp,1)
 		worker.WorkQueue <- w
-		meta := <-w.Data.Result
-		c.JSON(http.StatusOK,gin.H{"proxy":w.Data.Proxy,"meta":meta})
-	} else {
-		c.String(http.StatusBadRequest,"method 请求有误")
-	}
+		resultresp := <-w.Data.Result
+		close(w.Data.Result)
+		if resultresp.Err != nil {
+			c.JSON(http.StatusBadRequest,gin.H{"proxy":w.Data.Proxy,"meta":""})
+		} else {
+			b,err := ioutil.ReadAll(resultresp.Response.Body)
+			resultresp.Response.Body.Close()
+			if err != nil {
+				c.JSON(resultresp.Response.StatusCode,gin.H{"proxy":w.Data.Proxy,"meta":""})
+				return
+			}
+			c.JSON(resultresp.Response.StatusCode,gin.H{"proxy":w.Data.Proxy,"meta":string(b)})
+		}
+		return
 }
 

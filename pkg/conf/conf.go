@@ -13,6 +13,7 @@ type Config struct {
 		WorkSize int
 		TimeOut int
 		ProxyIpSize int
+		RetryMax int
 	}
 	Redis struct {
 		On   bool
@@ -118,6 +119,7 @@ func (c *Config) Load(confFile string) {
 	c.Pool.WorkSize = ini.GetInt("workpool","WORK_SIZE",c.Pool.WorkSize )
 	c.Pool.TimeOut = ini.GetInt("workpool","TIME_OUT",c.Pool.TimeOut)
 	c.Pool.ProxyIpSize = ini.GetInt("workpool","PROXY_IP_SIZE",c.Pool.ProxyIpSize)
+	c.Pool.RetryMax = ini.GetInt("workpool","RETRY_MAX",c.Pool.RetryMax)
 	// redis
 	c.Redis.On = ini.GetBool("redis","ON",c.Redis.On)
 	c.Redis.Addr = ini.GetString("redis","ADDR",c.Redis.Addr)

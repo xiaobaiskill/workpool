@@ -28,6 +28,7 @@ func StartDispathcher(nworks int) {
 	// 用于获取ip, 获取方式：1 定时30秒获取一次 ， 2 当工作量 > 代理ip量时 获取一次
 	go func() {
 		//t := time.NewTicker(30 * time.Second)
+		//defer t.Stop()
 		for {
 			select {
 			/*case <-t.C:

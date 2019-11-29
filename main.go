@@ -3,9 +3,10 @@ package main
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/xiaobaiskill/workpool/internal/server"
 	"github.com/xiaobaiskill/workpool/pkg/conf"
+	"github.com/xiaobaiskill/workpool/pool"
 	"github.com/xiaobaiskill/workpool/pool/dispathcher"
-	"github.com/xiaobaiskill/workpool/server"
 	"log"
 	"os"
 	"os/signal"
@@ -22,7 +23,6 @@ func main() {
 		cfg.Load("conf/app_dev.ini")
 	}
 	s := server.New(cfg)
-	dispathcher.StartDispathcher(cfg.Pool.WorkSize)
 	go s.Run()
 
 	sigs := make(chan os.Signal, 1)
@@ -34,7 +34,7 @@ func main() {
 		sig := <-sigs
 		log.Println(sig)
 
-		dispathcher.StopDispathcher()
+		pool.StopDispathcher()
 		time.Sleep(2 * time.Second)
 
 		done <- true

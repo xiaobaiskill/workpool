@@ -3,14 +3,13 @@ package request
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/xiaobaiskill/workpool/internal/proxypool"
 	"github.com/xiaobaiskill/workpool/pkg/conf"
 	"github.com/xiaobaiskill/workpool/pkg/log"
-	"github.com/xiaobaiskill/workpool/pool/queue"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"strings"
-	"time"
 )
 
 // 请求的参数
@@ -28,9 +27,6 @@ type ResultResp struct {
 type request struct {
 	Proxy  bool
 	Result chan ResultResp
-	//Url    string `json:"action"`
-	//Method string `json:"method"`
-	//Query  map[string]interface{}
 	*http.Request
 }
 
@@ -42,61 +38,91 @@ type WorkRequest struct {
 
 //var add int  // 记录一共运行了多少次
 
-func (w *WorkRequest) Execute() (error) {
-	/*defer func() {
-		add++
-		fmt.Println(add)
-	}()*/
-	var (
-		httpclient    *http.Client
-		httpclientmap queue.HttpClientQueue
-		err           error
-		resp          *http.Response
-	)
-
-	if w.Data.Proxy {
-		httpclientmap = <-queue.HttpClientQueueChan
-		log.Logger.Info("使用的代理ip为：" + httpclientmap.Ip)
-		httpclient = httpclientmap.HttpClient
-	} else {
-		httpclient = &http.Client{Timeout: time.Duration(conf.Conf.Pool.TimeOut) * 1000 * 1000}
+func (w *WorkRequest) Execute() {
+	// 不使用代理 请求
+	if !w.Data.Proxy {
+		w.notProxyRequest()
 	}
 
+	// 使用代理请求
+	w.proxyRequest()
+}
+
+// 非代理请求
+func (w *WorkRequest) notProxyRequest() {
 	for {
-
-		resp, err = httpclient.Do(w.Data.Request)
+		httpclient := &http.Client{}
+		resp, err := httpclient.Do(w.Data.Request)
 		checkOk := w.retryPolicy(resp, err)
-
 		if !checkOk {
-			if w.Data.Proxy {
-				go func() { queue.HttpClientQueueChan <- httpclientmap }()
-			}
-			w.Data.Result <- ResultResp{resp, nil}
-			break
-		}
-
-		if err == nil {
-			w.drainBody(resp.Body)
-		} else {
-			log.Logger.Error(fmt.Sprintf("代理IP：%s,请求失败：%v", httpclientmap.Ip, err))
-			if w.Data.Proxy {
-				queue.HCMap.Del(httpclientmap.Ip)
-				httpclientmap = <-queue.HttpClientQueueChan
-				httpclient = httpclientmap.HttpClient
-			}
-		}
-
-		w.RetryMax--
-		if w.RetryMax <= 0 {
-			if w.Data.Proxy {
-				queue.HCMap.Del(httpclientmap.Ip)
-				//go func() { queue.HttpClientQueueChan <- httpclientmap }()
-			}
 			w.Data.Result <- ResultResp{resp, err}
 			break
 		}
+		w.RetryMax--
+		if w.RetryMax <= 0 {
+			w.Data.Result <- ResultResp{resp, err}
+			break
+		}
+		if err == nil {
+			w.drainBody(resp.Body)
+		}
 	}
-	return nil
+
+}
+
+// 代理请求
+func (w *WorkRequest) proxyRequest() {
+
+	var (
+		err        error
+		resp       *http.Response
+		clientMap  proxypool.HTTPClientMap
+		httpclient *http.Client
+		index      int
+		ok         bool
+		retryMax   int
+	)
+	proxypools := proxypool.Newproxypools()
+	retryMax = w.RetryMax
+
+	for {
+		clientMap, index, ok = proxypools.Pop()
+		if !ok {
+			w.Data.Result <- ResultResp{resp, fmt.Errorf("not Pop proxyIp")}
+			break
+		}
+		w.RetryMax = retryMax // 重置单个IP重试次数
+		log.Logger.Info("使用的代理ip为：" + clientMap.Ip)
+		httpclient = clientMap.Client
+
+		for {
+			resp, err = httpclient.Do(w.Data.Request)
+			checkOk := w.retryPolicy(resp, err)
+
+			if !checkOk {
+				go func() { proxypools.Push(index, clientMap) }()
+				w.Data.Result <- ResultResp{resp, err}
+				return
+			}
+
+			if err == nil {
+				w.drainBody(resp.Body)
+			} else {
+				log.Logger.Error(fmt.Sprintf("代理IP：%s,请求失败：%v", clientMap.Ip, err))
+				go func() { proxypools.Del(index, clientMap) }()
+				break
+			}
+
+			w.RetryMax--
+			// 单个代理ip的使用次数用完了 ，但是还是没有获取到数据，则结束这个ip ,用下一个
+			if w.RetryMax <= 0 {
+				go func() { proxypools.Push(index, clientMap) }()
+				break
+			}
+		}
+	}
+
+	w.Data.Result <- ResultResp{resp, err}
 }
 
 func (w *WorkRequest) drainBody(body io.ReadCloser) {
@@ -104,7 +130,7 @@ func (w *WorkRequest) drainBody(body io.ReadCloser) {
 
 	_, err := io.Copy(ioutil.Discard, io.LimitReader(body, 10))
 	if err != nil {
-		log.Logger.Error("Error reading response body: " + err.Error())
+		log.Logger.Error(fmt.Sprintf("Error reading response body: %v", err))
 	}
 }
 
@@ -120,10 +146,12 @@ func (w *WorkRequest) retryPolicy(resp *http.Response, err error) (bool) {
 }
 
 func NewWorkRequest(body []byte) (w *WorkRequest, err error) {
+	log.Logger.Info("========== 有代理请求进来了"+ string(body))
+
 	p := postValue{}
 	err = json.Unmarshal(body, &p)
 	if err != nil {
-		log.Logger.Error("请求数据 有误，无法实现json 转换：" + err.Error())
+		log.Logger.Error(fmt.Sprintf("请求数据 有误，无法实现json 转换：", err))
 		return
 	}
 
@@ -149,12 +177,13 @@ func NewWorkRequest(body []byte) (w *WorkRequest, err error) {
 	if len(p.Data) > 0 {
 		err = json.Unmarshal([]byte(p.Data), &m)
 		if err != nil {
-			log.Logger.Error("请求的参数中 query 数据json 解析失败：" + err.Error())
+			log.Logger.Error(fmt.Sprintf("请求的参数中 query 数据json 解析失败：%v", err))
 			return
 		}
 	}
 
 	w = &WorkRequest{conf.Conf.Pool.RetryMax, r}
+	log.Logger.Info("=========work生成==========")
 	return
 
 }

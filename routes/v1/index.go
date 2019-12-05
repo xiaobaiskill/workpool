@@ -8,7 +8,6 @@ import (
 
 func RouterIndexMap(router *gin.RouterGroup){
 	router.GET("/ping",ping.Ping)
-	router.GET("/catproxyip", ping.CatProxyIp)
 
 	router.POST("/index",index.Index)
 }

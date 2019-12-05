@@ -8,11 +8,16 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/natefinch/lumberjack"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/xiaobaiskill/workpool/internal/proxypool"
+	"github.com/xiaobaiskill/workpool/internal/proxypool/backupproxy"
+	"github.com/xiaobaiskill/workpool/internal/proxypool/publicproxy"
+	"github.com/xiaobaiskill/workpool/internal/proxypool/selfproxy"
 	"github.com/xiaobaiskill/workpool/pkg/conf"
 	"github.com/xiaobaiskill/workpool/pkg/log"
 	"github.com/xiaobaiskill/workpool/pkg/models"
+	"github.com/xiaobaiskill/workpool/pkg/pool"
 	"github.com/xiaobaiskill/workpool/pkg/redis"
-	"github.com/xiaobaiskill/workpool/pool"
 	"github.com/xiaobaiskill/workpool/routes"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -24,13 +29,19 @@ import (
 type Server struct {
 	cfg *conf.Config
 	db  models.DB
+	proxypools *proxypool.Register
 }
 
 func (s *Server) Run() {
 	router := gin.New()
 	routes.NewRouter(router)
 
-	router.GET("/metrics", pool.StartDispathcher(s.cfg.Pool.WorkSize))
+	// 开启监控
+	router.GET("/workpool_metrics", pool.StartDispathcher(s.cfg.Pool.WorkSize))
+	router.GET("/proxypool_metrics", s.proxypools.Metrics.GinHandler())
+	router.GET("/metrics", func(c *gin.Context) {
+		promhttp.Handler().ServeHTTP(c.Writer,c.Request)
+	})
 
 
 	router.Run(fmt.Sprintf("%s:%v", s.cfg.Server.HttpAddr, s.cfg.Server.HttpPort))
@@ -123,6 +134,15 @@ func (s *Server) configureGORM(g *gorm.DB) error {
 	return nil
 }
 
+// 启动proxypools
+func (s *Server) Proxypools(){
+	r := proxypool.NewRegister()
+	r.Add(publicproxy.NewPublicProxy(s.cfg.Proxypool.PublicproxyMinsize),s.cfg.Proxypool.PublicproxyRetryNum,"publicproxy")
+	r.Add(backupproxy.NewBackupProxy(s.cfg.Proxypool.BackupproxyConf,s.cfg.Pool.WorkSize),s.cfg.Proxypool.BackupproxyRetryNum,"backupproxy")
+	r.Add(selfproxy.NewSelf(s.cfg.Proxypool.SelfUrl),s.cfg.Proxypool.SelfRetryNum,"selfproxy")
+	s.proxypools = r
+}
+
 func New(cfg *conf.Config) *Server {
 	s := &Server{cfg: cfg}
 	s.configureLog()
@@ -132,5 +152,7 @@ func New(cfg *conf.Config) *Server {
 	if err != nil {
 		panic(err)
 	}
+
+	s.Proxypools()
 	return s
 }

@@ -28,7 +28,7 @@ func (w worker) start() {
 			case work := <-w.work:
 				metric.jobTotalInc()
 				metric.jobexectingInc()
-				work.Execute()
+				Execute()
 				metric.jobexectingDec()
 			case <-w.end:
 				return

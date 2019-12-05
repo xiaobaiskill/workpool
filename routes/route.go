@@ -8,5 +8,4 @@ import (
 func NewRouter(router *gin.Engine){
 	v1 := router.Group("/v1")
 	version.V1RouterMaps(v1)
-
 }

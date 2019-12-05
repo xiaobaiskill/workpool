@@ -53,6 +53,14 @@ type Config struct {
 	Security struct {
 		InstallLock bool
 	}
+	Proxypool struct{
+		PublicproxyMinsize int
+		PublicproxyRetryNum int
+		BackupproxyConf string
+		BackupproxyRetryNum int
+		SelfUrl string
+		SelfRetryNum int
+	}
 }
 
 func NewConfig() *Config {
@@ -99,6 +107,14 @@ func NewConfig() *Config {
 	c.LogXorm.MaxDays = 3
 	// security
 	c.Security.InstallLock = true
+	// proxypool
+	c.Proxypool.PublicproxyMinsize = 50
+	c.Proxypool.PublicproxyRetryNum = 5
+	c.Proxypool.BackupproxyConf = "conf/backupproxy.conf"
+	c.Proxypool.BackupproxyRetryNum = -1
+	c.Proxypool.SelfUrl = "https://hooks.slack.com/services/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"
+	c.Proxypool.SelfRetryNum = 1
+
 	Conf = c
 	return c
 }
@@ -155,4 +171,11 @@ func (c *Config) Load(confFile string) {
 	//security
 	c.Security.InstallLock = ini.GetBool("security","INSTALL_LOCK",c.Security.InstallLock)
 
+	// proxypool
+	c.Proxypool.PublicproxyMinsize = ini.GetInt("proxypool","PUBLICPROXYMINSIZE",c.Proxypool.PublicproxyMinsize)
+	c.Proxypool.PublicproxyRetryNum = ini.GetInt("proxypool","PUBLICPROXYRETRYNUM",c.Proxypool.PublicproxyRetryNum)
+	c.Proxypool.BackupproxyConf = ini.GetString("proxypool","BACKUPPROXYCONF",c.Proxypool.BackupproxyConf)
+	c.Proxypool.BackupproxyRetryNum = ini.GetInt("proxypool","BACKUPPROXYRETRYNUM",c.Proxypool.BackupproxyRetryNum)
+	c.Proxypool.SelfUrl = ini.GetString("proxypool","SELFURL",c.Proxypool.SelfUrl)
+	c.Proxypool.SelfRetryNum = ini.GetInt("proxypool","SELFRETRYNUM",c.Proxypool.SelfRetryNum)
 }

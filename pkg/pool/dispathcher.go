@@ -2,9 +2,9 @@ package pool
 
 import "github.com/gin-gonic/gin"
 
-type DispathCher struct{
-	Metrics *metrics
-}
+//type DispathCher struct{
+//	Metrics *metrics
+//}
 
 func StartDispathcher(nworks int) gin.HandlerFunc{
 	// 初始化 prometheus

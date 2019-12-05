@@ -1,9 +1,11 @@
 package index
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/xiaobaiskill/workpool/pool/job/request"
-	"github.com/xiaobaiskill/workpool/pool/worker"
+	"github.com/xiaobaiskill/workpool/internal/task/request"
+	"github.com/xiaobaiskill/workpool/pkg/log"
+	"github.com/xiaobaiskill/workpool/pkg/pool"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -24,10 +26,12 @@ func Index(c *gin.Context){
 
 		w.Data.Proxy,_ = strconv.ParseBool(c.Query("proxy"))
 		w.Data.Result = make(chan request.ResultResp,1)
-		worker.WorkQueue <- w
+		pool.WorkQueue <- w
 		resultresp := <-w.Data.Result
 		close(w.Data.Result)
+		log.Logger.Debug(fmt.Sprintf("response:%v ,err:%v",resultresp.Response.Body,resultresp.Err))
 		if resultresp.Err != nil {
+			log.Logger.Info(fmt.Sprintf("请求报错啦：%v",err))
 			c.JSON(http.StatusBadRequest,gin.H{"proxy":w.Data.Proxy,"meta":""})
 		} else {
 			b,err := ioutil.ReadAll(resultresp.Response.Body)

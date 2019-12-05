@@ -10,7 +10,9 @@ var metric *metrics
 
 type metrics struct{
 	jobTotalCounter prometheus.Counter
-	executingGauge *prometheus.GaugeVec
+	executingGauge prometheus.Gauge
+
+	registry *prometheus.Registry
 }
 
 func initMetrics(metricsPrefix string){
@@ -18,14 +20,17 @@ func initMetrics(metricsPrefix string){
 		jobTotalCounter: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace:metricsPrefix,
 			Name:"Job_total",
-			Help:"This is used to calculate the total number of jobs",
+			Help:"总共运行了多少次job",
 		}),
-		executingGauge:  prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		executingGauge:  prometheus.NewGauge(prometheus.GaugeOpts{
 			Namespace:metricsPrefix,
 			Name:"Job_execting",
-			Help:"This is used to measure the executing job",
-		},[]string{"execting"}),
+			Help:"正在运行中的job",
+		}),
 	}
+
+	metric.registry = prometheus.NewRegistry()
+	metric.registry.MustRegister(metric.jobTotalCounter,metric.executingGauge)
 }
 
 
@@ -34,17 +39,16 @@ func (m *metrics) jobTotalInc(){
 }
 
 func (m *metrics) jobexectingInc(){
-	m.executingGauge.WithLabelValues("job_execting").Inc()
+	m.executingGauge.Inc()
 }
 
 func (m *metrics) jobexectingDec(){
-	m.executingGauge.WithLabelValues("job_execting").Dec()
+	m.executingGauge.Dec()
 }
-
 
 
 func (m *metrics) ginHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		promhttp.Handler().ServeHTTP(c.Writer,c.Request)
+		promhttp.HandlerFor(m.registry, promhttp.HandlerOpts{}).ServeHTTP(c.Writer,c.Request)
 	}
 }

@@ -2,17 +2,14 @@ package proxypool
 
 import "net/http"
 
-type HTTPClientMap struct{
-	ip string
+type HTTPClientMap struct {
+	Ip string
 	*http.Client
 }
 
 type Proxy interface {
-	Init()     // 初始化
-	Pop()      // 取数据
-	Push()     // 推送数据
-	Del()      // 删除数据
-	Add()      // 添加数据
+	Pop() (HTTPClientMap, bool) // 取数据
+	Push(HTTPClientMap)         // 推送数据
+	Del(string)                 // 删除数据
+	Len() int                   // 代理池数量
 }
-
-

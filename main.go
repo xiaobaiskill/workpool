@@ -15,7 +15,7 @@ import (
 
 func main() {
 	cfg := conf.NewConfig()
-
+	fmt.Println(os.Getpid())
 	if os.Getenv("GIN_MODE") == gin.ReleaseMode {
 		cfg.Load("conf/app.ini")
 	} else {

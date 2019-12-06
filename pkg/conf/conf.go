@@ -112,7 +112,7 @@ func NewConfig() *Config {
 	c.Proxypool.PublicproxyRetryNum = 5
 	c.Proxypool.BackupproxyConf = "conf/backupproxy.conf"
 	c.Proxypool.BackupproxyRetryNum = -1
-	c.Proxypool.SelfUrl = "https://hooks.slack.com/services/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"
+	c.Proxypool.SelfUrl = ""
 	c.Proxypool.SelfRetryNum = 1
 
 	Conf = c

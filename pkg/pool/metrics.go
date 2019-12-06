@@ -28,7 +28,6 @@ func initMetrics(metricsPrefix string){
 			Help:"正在运行中的job",
 		}),
 	}
-
 	metric.registry = prometheus.NewRegistry()
 	metric.registry.MustRegister(metric.jobTotalCounter,metric.executingGauge)
 }

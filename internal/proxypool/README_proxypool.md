@@ -57,6 +57,7 @@ type Proxy interface {
 	Push(IpHTTPClient)        // 推送数据
 	Del(ip string)            // 删除数据
 	Len()int                  // 代理池的数量
+    Addmetric(*Metrics)       // 对代理的监控
 }
 ```
 * publicproxy.go

@@ -88,8 +88,9 @@ func (w *WorkRequest) proxyRequest() {
 	for {
 		clientMap, index, ok = proxypools.Pop()
 		if !ok {
+			log.Logger.Error("[task/request] 没有获取到代理IP -- end")
 			w.Data.Result <- ResultResp{resp, fmt.Errorf("not Pop proxyIp")}
-			break
+			return
 		}
 		w.RetryMax = retryMax // 重置单个IP重试次数
 		log.Logger.Info("使用的代理ip为：" + clientMap.Ip)
@@ -100,7 +101,7 @@ func (w *WorkRequest) proxyRequest() {
 			checkOk := w.retryPolicy(resp, err)
 
 			if !checkOk {
-				go func() { proxypools.Push(index, clientMap) }()
+				go func(i int, cm proxypool.HTTPClientMap) { proxypools.Push(i, cm) }(index, clientMap)
 				w.Data.Result <- ResultResp{resp, err}
 				return
 			}
@@ -109,19 +110,20 @@ func (w *WorkRequest) proxyRequest() {
 				w.drainBody(resp.Body)
 			} else {
 				log.Logger.Error(fmt.Sprintf("代理IP：%s,请求失败：%v", clientMap.Ip, err))
-				go func() { proxypools.Del(index, clientMap) }()
+				go func(i int, cm proxypool.HTTPClientMap) { proxypools.Del(i, cm) }(index, clientMap)
 				break
 			}
 
 			w.RetryMax--
 			// 单个代理ip的使用次数用完了 ，但是还是没有获取到数据，则结束这个ip ,用下一个
 			if w.RetryMax <= 0 {
-				go func() { proxypools.Push(index, clientMap) }()
+				go func(i int, cm proxypool.HTTPClientMap) { proxypools.Push(i, cm) }(index, clientMap)
+				log.Logger.Info(fmt.Sprintf("重复请求还是没有数据：%v",clientMap))
 				break
 			}
 		}
 	}
-
+	log.Logger.Error(fmt.Sprintf("[task/request] 最后也没有获取到数据 第%d代理池，ok:%v 结果是啥：%v,",index,ok,resp))
 	w.Data.Result <- ResultResp{resp, err}
 }
 

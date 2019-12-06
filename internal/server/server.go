@@ -137,9 +137,10 @@ func (s *Server) configureGORM(g *gorm.DB) error {
 // 启动proxypools
 func (s *Server) Proxypools(){
 	r := proxypool.NewRegister()
-	r.Add(publicproxy.NewPublicProxy(s.cfg.Proxypool.PublicproxyMinsize),s.cfg.Proxypool.PublicproxyRetryNum,"publicproxy")
-	r.Add(backupproxy.NewBackupProxy(s.cfg.Proxypool.BackupproxyConf,s.cfg.Pool.WorkSize),s.cfg.Proxypool.BackupproxyRetryNum,"backupproxy")
-	r.Add(selfproxy.NewSelf(s.cfg.Proxypool.SelfUrl),s.cfg.Proxypool.SelfRetryNum,"selfproxy")
+	fmt.Println(s.cfg.Proxypool)
+	r.Add(publicproxy.NewPublicProxy(s.cfg.Proxypool.PublicproxyMinsize),s.cfg.Proxypool.PublicproxyRetryNum,)
+	r.Add(backupproxy.NewBackupProxy(s.cfg.Proxypool.BackupproxyConf,s.cfg.Pool.WorkSize),s.cfg.Proxypool.BackupproxyRetryNum,)
+	r.Add(selfproxy.NewSelf(s.cfg.Proxypool.SelfUrl),s.cfg.Proxypool.SelfRetryNum,)
 	s.proxypools = r
 }
 

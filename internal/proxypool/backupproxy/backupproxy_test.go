@@ -9,7 +9,9 @@ import (
 
 func TestNewBackupProxy(t *testing.T) {
 	//assert.NoError()
-	backup := NewBackupProxy("../../../conf/backupproxy.test.conf", 100)
+	backup := NewBackupProxy("../../../conf/backupproxy.test.conf", 10)
+	backup.AddMetric(proxypool.NewMetrics("aaa"))
+
 	assert.NotNil(t, backup.httpClients["http://127.0.0.1:5839"].Client)
 	assert.NotNil(t, backup.httpClients["https://39.193.12.7:8889"].Client)
 	assert.NotNil(t, backup.httpClients["https://38.23.214.22:7912"].Client)

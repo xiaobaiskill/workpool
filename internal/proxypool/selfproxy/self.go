@@ -40,6 +40,10 @@ func (s *selfproxy) Len()int{
 	return 1
 }
 
+func (s *selfproxy) AddMetric(_ *Metrics){
+	return
+}
+
 func NewSelf(url string) *selfproxy {
 	s := new(selfproxy)
 	s.warnURL = url

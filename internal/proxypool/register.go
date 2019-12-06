@@ -1,7 +1,5 @@
 package proxypool
 
-import "time"
-
 type proxypoolRetrynum struct {
 	proxy    Proxy
 	retrynum int
@@ -15,26 +13,15 @@ func init() {
 
 
 type Register struct{
-	Metrics *metrics
+	Metrics *Metrics
 }
 
 // 注入 不同proxy池，和每个池允许job调用的次数
-func (r *Register)Add(proxy Proxy, retrynum int, proxyName string) {
-	r.cronCheckProxyNum(proxyName,proxy)
+func (r *Register)Add(proxy Proxy, retrynum int) {
+	proxy.AddMetric(r.Metrics)
 	proxypoolRetrynums = append(proxypoolRetrynums, proxypoolRetrynum{proxy, retrynum})
 }
 
-func (r *Register) cronCheckProxyNum(name string,proxy Proxy){
-	go func() {
-		tc := time.NewTicker(time.Second)
-		for {
-			select {
-			case <-tc.C:
-				r.Metrics.proxypoolnumset(name,float64(proxy.Len()))
-			}
-		}
-	}()
-}
 
 func NewRegister()*Register{
 	r := new(Register)

@@ -11,11 +11,13 @@ import (
 )
 
 type publicProxy struct {
+	name string
 	minSize          int
 	httpClients      map[string]HTTPClientMap
 	httpClientsQueue chan HTTPClientMap
 	getIpChan        chan bool // 是否获取ip
 	sync.Mutex
+	m *Metrics
 }
 
 func (p *publicProxy) init() {
@@ -31,23 +33,21 @@ func (p *publicProxy) init() {
 		for {
 			select {
 			case <-tc.C:
-				if len(p.httpClients) > p.minSize*4 {
+				if p.Len() > p.minSize*3 {
 					continue
 				}
-				p.getPublicProxy()
+				p.getRandomPublicProxy()
 			case <-p.getIpChan:
 				if len(p.httpClients) > p.minSize {
 					continue
 				}
-				p.getPublicProxy()
+				p.getRandomPublicProxy()
 			}
 		}
 	}()
 }
 
 func (p *publicProxy) Pop() (HTTPClientMap, bool) {
-	p.Lock()
-	defer p.Unlock()
 	if p.Len() <= 0 {
 		return HTTPClientMap{}, false
 	}
@@ -66,6 +66,7 @@ func (p *publicProxy) Push(httpclientip HTTPClientMap) {
 func (p *publicProxy) Del(ip string) {
 	p.Lock()
 	delete(p.httpClients, ip)
+	p.m.ProxypoolnumDec(p.name)
 	p.Unlock()
 
 	if len(p.httpClients) < p.minSize {
@@ -78,6 +79,10 @@ func (p *publicProxy) Del(ip string) {
 func (p *publicProxy) Len() int {
 	return len(p.httpClients)
 }
+func (p *publicProxy) AddMetric(mc *Metrics){
+	p.m = mc
+	p.init()
+}
 
 // 将代理ip 放入至 池中
 func (p *publicProxy) add(ip *models.IP) {
@@ -89,6 +94,7 @@ func (p *publicProxy) add(ip *models.IP) {
 
 	hCIp := HTTPClientMap{ip.Data, p.createHttpClient(ip)}
 	p.httpClients[ip.Data] = hCIp
+	p.m.ProxypoolnumInc(p.name)
 	go func() {
 		p.httpClientsQueue <- hCIp
 	}()
@@ -98,6 +104,21 @@ func (p *publicProxy) add(ip *models.IP) {
 // 获取免费代理ip
 func (p *publicProxy) getPublicProxy() {
 	ips, err := models.Conn.GetNumIPWithType(p.minSize)
+	if err != nil || len(ips) == 0 {
+		// 运气糟糕 没有获取到数据怎么办呀
+		//panic("没有获取可用的IP ，程序终止")
+		log.Logger.Warn("publicproxy 初次没有获取到代理ip")
+		panic("publicproxy 初次没有获取到代理ip")
+		return
+	}
+
+	for _, ip := range ips {
+		p.add(ip)
+	}
+}
+
+func (p *publicProxy) getRandomPublicProxy() {
+	ips, err := models.Conn.GetRandNumIPWithType(p.minSize)
 	if err != nil || len(ips) == 0 {
 		// 运气糟糕 没有获取到数据怎么办呀
 		//panic("没有获取可用的IP ，程序终止")
@@ -137,8 +158,8 @@ func (p *publicProxy) createHttpClient(ip *models.IP) *http.Client {
 
 func NewPublicProxy(minSize int) *publicProxy {
 	p := new(publicProxy)
+	p.name = "publicproxy"
 	p.minSize = minSize
-	p.init()
 
 	return p
 }

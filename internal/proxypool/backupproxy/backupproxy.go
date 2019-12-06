@@ -14,11 +14,13 @@ import (
 )
 
 type backupproxy struct {
+	name string
 	maxSize          int    // 设置最多放多少个备用ip
 	backupproxyfile  string // 备用代理池ip 的文件
 	httpClients      map[string]HTTPClientMap
 	httpClientsQueue chan HTTPClientMap
 	sync.Mutex
+	m *Metrics
 }
 
 func (b *backupproxy) init() {
@@ -28,7 +30,7 @@ func (b *backupproxy) init() {
 	b.getFileipAdd()
 
 	go func(fileTime int64) {
-		tc := time.NewTicker(2 * time.Minute) // 5秒检测一次文件是否修改
+		tc := time.NewTicker(2 * time.Minute) // 2分钟检测一次文件是否修改
 		defer tc.Stop()
 		for {
 			select {
@@ -44,8 +46,6 @@ func (b *backupproxy) init() {
 }
 
 func (b *backupproxy) Pop() (client HTTPClientMap, ok bool) {
-	b.Lock()
-	defer b.Unlock()
 	if len(b.httpClientsQueue) > 0{
 		ok = true
 		client = <-b.httpClientsQueue
@@ -60,10 +60,17 @@ func (b *backupproxy) Push(httpclientip HTTPClientMap) {
 func (b *backupproxy) Del(ip string) {
 	b.Lock()
 	delete(b.httpClients,ip)
+	b.m.ProxypoolnumDec(b.name)
 	b.Unlock()
+
 }
 func (b *backupproxy) Len()int{
 	return len(b.httpClients)
+}
+
+func (b *backupproxy) AddMetric(mc *Metrics){
+	b.m = mc
+	b.init()
 }
 
 func (b *backupproxy) add(ip string) {
@@ -76,7 +83,7 @@ func (b *backupproxy) add(ip string) {
 	if _, ok := b.httpClients[ip]; ok {
 		return
 	}
-
+	b.m.ProxypoolnumInc(b.name)
 	hcip := HTTPClientMap{ip, b.createHttpClient(ip)}
 	b.httpClients[ip] = hcip
 	b.httpClientsQueue <- hcip
@@ -100,7 +107,6 @@ func (b *backupproxy) getFileipAdd() {
 
 	for {
 		s, err := bf.ReadString('\n')
-
 		isbool := reg.MatchString(s)
 		if isbool {
 			ip := reg.FindStringSubmatch(s)[1]
@@ -125,7 +131,7 @@ func (b *backupproxy) createHttpClient(ip string) *http.Client {
 	}
 	client := &http.Client{
 		Transport: transport,
-		Timeout: 4 * time.Second,
+		Timeout: 6 * time.Second,
 	}
 	return client
 }
@@ -147,8 +153,8 @@ func (b *backupproxy) getFileModTime() int64 {
 
 func NewBackupProxy(file string, maxsize int) *backupproxy {
 	b := new(backupproxy)
+	b.name = "backupproxy"
 	b.backupproxyfile = file
 	b.maxSize = maxsize
-	b.init()
 	return b
 }

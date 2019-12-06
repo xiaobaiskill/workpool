@@ -24,6 +24,9 @@ func (p *proxy1) Del(ip string)  {
 func (p *proxy1) Len()int{
 	return 1
 }
+func (p *proxy1) AddMetric( _ *Metrics){
+	return
+}
 
 type proxy2 struct{
 	t *testing.T
@@ -44,12 +47,15 @@ func (p *proxy2) Del(ip string)  {
 func (p *proxy2) Len()int{
 	return 1
 }
+func (p *proxy2) AddMetric( _ *Metrics){
+	return
+}
 
 
 func TestNewRegister(t *testing.T) {
 	r := NewRegister()
-	r.Add(&proxy1{t},2,"proxy1")
-	r.Add(&proxy2{t},1,"proxy2")
+	r.Add(&proxy1{t},2)
+	r.Add(&proxy2{t},1)
 
 	p := Newproxypools()
 	client,index,ok := p.Pop()

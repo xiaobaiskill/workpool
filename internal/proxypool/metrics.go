@@ -6,24 +6,28 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-type metrics struct {
+type Metrics struct {
 	proxypoolnums *prometheus.GaugeVec
 
 	registry *prometheus.Registry
 }
 
-func (m *metrics) proxypoolnumset(name string, num float64){
-	m.proxypoolnums.WithLabelValues(name).Set(num)
+func (m *Metrics) ProxypoolnumInc(name string){
+	m.proxypoolnums.WithLabelValues(name).Inc()
 }
 
-func (m *metrics) GinHandler() gin.HandlerFunc {
+func (m *Metrics) ProxypoolnumDec(name string){
+	m.proxypoolnums.WithLabelValues(name).Dec()
+}
+
+func (m *Metrics) GinHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		promhttp.HandlerFor(m.registry, promhttp.HandlerOpts{}).ServeHTTP(c.Writer,c.Request)
 	}
 }
 
-func NewMetrics(metricsPrefix string)*metrics {
-	m := &metrics{
+func NewMetrics(metricsPrefix string)*Metrics {
+	m := &Metrics{
 		proxypoolnums: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Namespace: metricsPrefix,
 			Name:      "proxypoolnums",

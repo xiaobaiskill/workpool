@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"github.com/jinzhu/gorm"
 	"github.com/xiaobaiskill/workpool/pkg/redis"
+	"math/rand"
 	"strconv"
 	"strings"
+	"time"
 )
 
 var Conn DB
@@ -23,6 +25,8 @@ type DB interface {
 	GetAllIP() ([]*IP, error)
 	// 获取指定数量的ip
 	GetNumIPWithType(int)([]*IP,error)
+	// 随机获取指定数量的IP
+	GetRandNumIPWithType(int)([]*IP,error)
 	// FindIPWithType 通过类型获取IP
 	FindIPWithType(typ string) ([]*IP, error)
 	// UpdateToFirstIP 将指定IP更新到第一个位置的IP数据上
@@ -89,6 +93,24 @@ func (d *DefaultDB) GetNumIPWithType(num int)([]*IP,error){
 	temIp := make([]*IP,num)
 	err := d.x.Order("speed asc").Limit(num).Find(&temIp).Error
 	return temIp,err
+}
+
+func (d *DefaultDB) GetRandNumIPWithType(num int)([]*IP,error){
+	temIp := make([]*IP,num)
+	count,err := d.CountIP()
+	if err != nil {
+		return nil,err
+	}
+
+	// 总数 大于 num 则随机取
+	if count > int64(num) {
+		rand.Seed(time.Now().UnixNano())
+		err := d.x.Order("speed asc").Limit(fmt.Sprintf("%v:%v",rand.Int63n(count-int64(num)),num)).Find(&temIp).Error
+		return temIp,err
+	}
+
+	// 总数小于num
+	return d.GetNumIPWithType(num)
 }
 
 func (d *DefaultDB) FindIPWithType(typ string) ([]*IP, error)  {
@@ -241,6 +263,38 @@ func (r *RedisDB) GetNumIPWithType(num int)([]*IP,error){
 		}
 	}
 	return ipModels,nil
+}
+
+// 随机获取 数据
+func (r *RedisDB) GetRandNumIPWithType(num int)([]*IP,error){
+	count,err := r.conn.ZCard(r.ipsKey)  // 获取成员数
+	if err != nil {
+		return nil,err
+	}
+
+	// 总数 大于 需要数
+	if int(count) > num {
+		rand.Seed(time.Now().UnixNano())
+		startNum := int64(rand.Intn(int(count)-num))
+		fieldValues,err := r.conn.ZRange(r.ipsKey,startNum,startNum + int64(num))
+		if err!=nil {
+			return nil,err
+		}
+		ipModels := make([]*IP,0)
+		if len(fieldValues) >0{
+			for _,v := range fieldValues{
+				ipModel,err := r.GetOneIP(v)
+				if err!=nil {
+					continue
+				}
+				ipModels = append(ipModels,ipModel)
+			}
+		}
+		return ipModels,nil
+	}
+
+	// 总数小于需要数
+	return r.GetNumIPWithType(num)
 }
 
 
